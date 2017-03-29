@@ -44,7 +44,7 @@ function rcp_csvui_purchase_import() {
 				<tr>
 					<th><?php _e( 'CSV File', 'rcp_csvui' ); ?></th>
 					<td>
-						<input type="file" name="rcp_csvui_file"/>
+						<input type="file" accept=".csv, text/csv" name="rcp_csvui_file"/>
 						<div class="description"><?php _e( 'Select the CSV file to import. Must follow guidelines above.', 'rcp_csvui' ); ?></div>
 					</td>
 				</tr>
