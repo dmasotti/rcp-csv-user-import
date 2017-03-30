@@ -1,6 +1,6 @@
 === Restrict Content Pro - CSV User Import ===
 Author URI: http://pippinsplugins.com
-Contributors: mordauk, chriscoyier
+Contributors: mordauk, chriscoyier, nosegraze, mindctrl
 Author: Pippin Williamson
 Donate link: http://pippinsplugins.com/support-the-site
 Tags: Restrict Content Pro, premium content, memberships, subscriptions, csv, user import, csv to users, Pippin Williamson, Pippin's Plugins
@@ -8,23 +8,15 @@ Requires at least 3.3
 Tested up to 4.5
 Stable tag: 1.1.3
 
-A plugin for importing a CSV of user accounts into Restrict Content Pro
+A plugin for importing a CSV of user accounts into Restrict Content Pro.
 
 == Description ==
 
-This plugin is an add-on for [Restrict Content Pro](http://pippinsplugins.com/restrict-content-pro-premium-content-plugin/), a complete subscription and premium content manager plugin for WordPress.
+This plugin is an add-on for [Restrict Content Pro](https://restrictcontentpro.com/), a complete subscription and premium content manager plugin for WordPress.
 
 Once activated, this plugin will provide a new menu item under the Restrict menu called **CSV Import**.
 
-In order to import correctly, you must preformat your CSV to match the requirements of the plugin. You CSV should have the following columns:
-
-**user_email, first_name, last_name, user_login**
-
-A sample CSV is included in the plugin's folder that you can use for reference.
-
-The user's email address is the only column that requires a value. If user_login is left blank, the user's email address will be used for their login name.
-
-When importing, every user has their password auto generated, so each user will need to go through the recover a lost password process.
+See the [CSV User Import documentation](http://docs.restrictcontentpro.com/article/1621-csv-user-import) for information on how to use this plugin.
 
 **Note:** this plugin should be able to handle the importation of a few thousands users at a time, but if you have more than 5,000 (or if you are having problems with server timeouts), you will want to consider creating a custom shell script to import the users in batches.
 
@@ -39,6 +31,11 @@ When importing, every user has their password auto generated, so each user will 
 1. CSV user import page.
 
 == Changelog ==
+= 1.1.5 =
+* Only allow CSV files to be selected during import.
+* Load the DatePicker styles on the import page.
+* Add the $user object to the rcp_user_import_user_added action.
+* Cleaned up and documented the code.
 
 = 1.1.3 =
 
