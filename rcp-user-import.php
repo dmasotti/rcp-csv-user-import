@@ -197,6 +197,9 @@ function rcp_csvui_process_csv() {
 				}
 			}
 
+			// Make sure a supplied date is formatted correctly.
+			$expiration = date( 'Y-m-d H:i:s', strtotime( $expiration ) );
+
 			$member->set_expiration_date( $expiration );
 
 			if ( ! empty( $user['payment_profile_id'] ) ) {
