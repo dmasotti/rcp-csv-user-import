@@ -198,8 +198,10 @@ function rcp_csvui_process_csv() {
 			}
 
 			// Make sure a supplied date is formatted correctly.
-			$timestamp  = is_int( $expiration ) ? $expiration : strtotime( $expiration, current_time( 'timestamp' );
-			$expiration = date( 'Y-m-d H:i:s', $timestamp ) );
+			if ( 'none' != strtolower( $expiration ) ) {
+				$timestamp  = is_int( $expiration ) ? $expiration : strtotime( $expiration, current_time( 'timestamp' ) );
+				$expiration = date( 'Y-m-d H:i:s', $timestamp );
+			}
 
 			$member->set_expiration_date( $expiration );
 
