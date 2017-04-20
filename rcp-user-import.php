@@ -215,6 +215,14 @@ function rcp_csvui_process_csv() {
 
 			$member->set_status( $status );
 
+			// Set join date.
+			if ( ! empty( $user['join_date'] ) ) {
+				$join_date = date( 'Y-m-d H:i:s', strtotime( $user['join_date'] ) );
+			} else {
+				$join_date = ''; // Will default to today.
+			}
+			$member->set_joined_date( $join_date );
+
 			do_action( 'rcp_user_import_user_added', $user_id, $user_data, $subscription_id, $status, $expiration, $user );
 		}
 
