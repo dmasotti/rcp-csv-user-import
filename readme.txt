@@ -5,8 +5,8 @@ Author: Pippin Williamson
 Donate link: http://pippinsplugins.com/support-the-site
 Tags: Restrict Content Pro, premium content, memberships, subscriptions, csv, user import, csv to users, Pippin Williamson, Pippin's Plugins
 Requires at least 3.3
-Tested up to 4.5
-Stable tag: 1.1.3
+Tested up to 4.9.1
+Stable tag: 1.1.6
 
 A plugin for importing a CSV of user accounts into Restrict Content Pro.
 
@@ -31,6 +31,12 @@ See the [CSV User Import documentation](http://docs.restrictcontentpro.com/artic
 1. CSV user import page.
 
 == Changelog ==
+= 1.1.6 =
+* New: Add support for member joined date.
+* Tweak: Improve compatibility with RCP core export file.
+* Fix: Expiration dates with commas not being parsed correctly.
+* Fix: Sanitize expiration date before saving.
+
 = 1.1.5 =
 * Only allow CSV files to be selected during import.
 * Load the DatePicker styles on the import page.

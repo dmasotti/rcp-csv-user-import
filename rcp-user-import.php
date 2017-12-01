@@ -3,7 +3,7 @@
  * Plugin Name: Restrict Content Pro - CSV User Import
  * Plugin URL: https://restrictcontentpro.com/downloads/csv-user-import/
  * Description: Allows you to import a CSV of users into Restrict Content Pro
- * Version: 1.1.5
+ * Version: 1.1.6
  * Author: Pippin Williamson
  * Author URI: https://pippinsplugins.com
  * Contributors: mordauk, chriscoyier, mindctrl, nosegraze
