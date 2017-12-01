@@ -37,7 +37,7 @@ function rcp_csvui_purchase_import() {
 		<h2><?php _e( 'CSV User Import', 'rcp_csvui' ); ?></h2>
 		<?php settings_errors( 'rcp-csv-ui' ); ?>
 		<P><?php _e( 'Use this tool to import user memberships into Restrict Content Pro', 'rcp_csvui' ); ?></p>
-		<p><?php _e( '<strong>Note</strong>: your CSV should contain the following fields: <em>user_email, first_name, last_name, user_login</em>. If you wish to update existing users, you can include a <em>ID</em> field as well.', 'rcp_csvui' ); ?></p>
+		<p><?php printf( __( '<strong>Note</strong>: your CSV should contain the following fields: <em>User Email, First Name, Last Name, User Login</em>. If you wish to update existing users, you can include a <em>User ID</em> field as well. See the <a href="%s">documentation article</a> for more available fields.', 'rcp_csvui' ), 'http://docs.restrictcontentpro.com/article/1621-csv-user-import' ); ?></p>
 		<script type="text/javascript">jQuery(document).ready(function($) { var dateFormat = 'yy-mm-dd'; $('.rcp_datepicker').datepicker({dateFormat: dateFormat}); });</script>
 		<form id="rcp_csvui_import" enctype="multipart/form-data" method="post">
 			<table class="form-table">
@@ -146,23 +146,27 @@ function rcp_csvui_process_csv() {
 
 				$user_data = get_userdata( $user['ID'] );
 
+			} elseif ( ! empty( $user['User ID'] ) ) {
+
+				$user_data = get_userdata( $user['User ID'] );
+
 			} else {
 
-				$user_data = get_user_by( 'email', $user['user_email'] );
+				$user_data = get_user_by( 'email', $user['User Email'] );
 
 			}
 
 			if ( ! $user_data ) {
 
-				$email      = $user['user_email'];
-				$password   = ! empty( $user['user_password'] ) ? $user['user_password'] : wp_generate_password();
-				$user_login = ! empty( $user['user_login'] ) ? $user['user_login'] : $user['user_email'];
+				$email      = $user['User Email'];
+				$password   = ! empty( $user['User Password'] ) ? $user['User Password'] : wp_generate_password();
+				$user_login = ! empty( $user['User Login'] ) ? $user['User Login'] : $user['User Email'];
 
 				$user_data  = array(
 					'user_login' => $user_login,
 					'user_email' => $email,
-					'first_name' => $user['first_name'],
-					'last_name'  => $user['last_name'],
+					'first_name' => $user['First Name'],
+					'last_name'  => $user['Last Name'],
 					'user_pass'  => $password,
 					'role'       => ! empty( $subscription_details->role ) ? $subscription_details->role : 'subscriber'
 				);
@@ -177,7 +181,7 @@ function rcp_csvui_process_csv() {
 
 			update_user_meta( $user_id, 'rcp_subscription_level', $subscription_id );
 
-			if ( ! empty( $user['recurring'] ) && in_array( $user['recurring'], array( '1', 'yes' ) ) ) {
+			if ( ! empty( $user['Recurring'] ) && in_array( $user['Recurring'], array( '1', 'yes' ) ) ) {
 				$member->set_recurring( true );
 			}
 
@@ -188,8 +192,8 @@ function rcp_csvui_process_csv() {
 			 */
 			if ( ! $expiration || strlen( trim( $expiration ) ) <= 0 ) {
 
-				if ( ! empty( $user['expiration'] ) ) {
-					$expiration = $user['expiration'];
+				if ( ! empty( $user['Expiration'] ) ) {
+					$expiration = $user['Expiration'];
 
 				} else {
 					// calculate expiration here
@@ -205,19 +209,19 @@ function rcp_csvui_process_csv() {
 
 			$member->set_expiration_date( $expiration );
 
-			if ( ! empty( $user['payment_profile_id'] ) ) {
-				$member->set_payment_profile_id( $user['payment_profile_id'] );
+			if ( ! empty( $user['Payment Profile ID'] ) ) {
+				$member->set_payment_profile_id( $user['Payment Profile ID'] );
 			}
 
-			if ( ! empty( $user['subscription_key'] ) ) {
-				update_user_meta( $user_id, 'rcp_subscription_key', $user['subscription_key'] );
+			if ( ! empty( $user['Subscription Key'] ) ) {
+				update_user_meta( $user_id, 'rcp_subscription_key', $user['Subscription Key'] );
 			}
 
 			$member->set_status( $status );
 
 			// Set join date.
-			if ( ! empty( $user['join_date'] ) ) {
-				$join_date = date( 'Y-m-d H:i:s', strtotime( $user['join_date'] ) );
+			if ( ! empty( $user['Join Date'] ) ) {
+				$join_date = date( 'Y-m-d H:i:s', strtotime( $user['Join Date'] ) );
 			} else {
 				$join_date = ''; // Will default to today.
 			}
