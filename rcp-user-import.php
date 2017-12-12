@@ -183,6 +183,8 @@ function rcp_csvui_process_csv() {
 
 			if ( ! empty( $user['Recurring'] ) && in_array( $user['Recurring'], array( '1', 'yes' ) ) ) {
 				$member->set_recurring( true );
+			} elseif ( in_array( $user['Recurring'], array( '0', 'no' ) ) ) {
+				$member->set_recurring( false );
 			}
 
 			/**
