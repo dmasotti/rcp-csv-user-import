@@ -137,6 +137,7 @@ function rcp_csvui_process_csv() {
 		foreach ( $csv->data as $user ) {
 
 			$expiration = ! empty( $_POST['rcp_expiration'] ) ? sanitize_text_field( $_POST['rcp_expiration'] ) : false;
+			$email      = ! empty( $user['User Email'] ) ? $user['User Email'] : $user['user_email'];
 
 			if ( ! empty( $user['id'] ) ) {
 
@@ -152,21 +153,53 @@ function rcp_csvui_process_csv() {
 
 			} else {
 
-				$user_data = get_user_by( 'email', $user['User Email'] );
+				$user_data = get_user_by( 'email', $email );
 
 			}
 
 			if ( ! $user_data ) {
 
-				$email      = $user['User Email'];
-				$password   = ! empty( $user['User Password'] ) ? $user['User Password'] : wp_generate_password();
-				$user_login = ! empty( $user['User Login'] ) ? $user['User Login'] : $user['User Email'];
+				// Password
+				if ( ! empty( $user['User Password'] ) ) {
+					$password = $user['User Password'];
+				} elseif ( ! empty( $user['user_password'] ) ) {
+					$password = $user['user_password'];
+				} else {
+					$password = wp_generate_password();
+				}
+
+				// User login
+				if ( ! empty( $user['User Login'] ) ) {
+					$user_login = $user['User Login'];
+				} elseif ( ! empty( $user['user_login'] ) ) {
+					$user_login = $user['user_login'];
+				} else {
+					$user_login = $email;
+				}
+
+				// First name
+				if ( ! empty( $user['First Name'] ) ) {
+					$first_name = $user['First Name'];
+				} elseif ( ! empty( $user['first_name'] ) ) {
+					$first_name = $user['first_name'];
+				} else {
+					$first_name = '';
+				}
+
+				// Last name
+				if ( ! empty( $user['Last Name'] ) ) {
+					$last_name = $user['Last Name'];
+				} elseif ( ! empty( $user['last_name'] ) ) {
+					$last_name = $user['last_name'];
+				} else {
+					$last_name = '';
+				}
 
 				$user_data  = array(
 					'user_login' => $user_login,
 					'user_email' => $email,
-					'first_name' => $user['First Name'],
-					'last_name'  => $user['Last Name'],
+					'first_name' => $first_name,
+					'last_name'  => $last_name,
 					'user_pass'  => $password,
 					'role'       => ! empty( $subscription_details->role ) ? $subscription_details->role : 'subscriber'
 				);
@@ -181,9 +214,18 @@ function rcp_csvui_process_csv() {
 
 			update_user_meta( $user_id, 'rcp_subscription_level', $subscription_id );
 
-			if ( ! empty( $user['Recurring'] ) && in_array( $user['Recurring'], array( '1', 'yes' ) ) ) {
+			// Recurring flag
+			if ( isset( $user['Recurring'] ) ) {
+				$recurring = $user['Recurring'];
+			} elseif ( isset( $user['recurring'] ) ) {
+				$recurring = $user['recurring'];
+			} else {
+				$recurring = null;
+			}
+
+			if ( ! empty( $recurring ) && in_array( $recurring, array( '1', 'yes' ) ) ) {
 				$member->set_recurring( true );
-			} elseif ( in_array( $user['Recurring'], array( '0', 'no' ) ) ) {
+			} elseif ( in_array( $recurring, array( '0', 'no' ) ) ) {
 				$member->set_recurring( false );
 			}
 
@@ -193,11 +235,11 @@ function rcp_csvui_process_csv() {
 			 * the expiration date based on the subscription level.
 			 */
 			if ( ! $expiration || strlen( trim( $expiration ) ) <= 0 ) {
-
 				if ( ! empty( $user['Expiration'] ) ) {
 					$expiration = $user['Expiration'];
-
-				} else {
+				} elseif ( ! empty( $user['expiration'] ) ) {
+					$expiration = $user['expiration'];
+				}  else {
 					// calculate expiration here
 					$expiration = rcp_calculate_subscription_expiration( $subscription_id );
 				}
@@ -211,12 +253,18 @@ function rcp_csvui_process_csv() {
 
 			$member->set_expiration_date( $expiration );
 
+			// Payment profile ID
 			if ( ! empty( $user['Payment Profile ID'] ) ) {
 				$member->set_payment_profile_id( $user['Payment Profile ID'] );
+			} elseif ( ! empty( $user['payment_profile_id'] ) ) {
+				$member->set_payment_profile_id( $user['payment_profile_id'] );
 			}
 
+			// Subscription key
 			if ( ! empty( $user['Subscription Key'] ) ) {
 				update_user_meta( $user_id, 'rcp_subscription_key', $user['Subscription Key'] );
+			} elseif ( ! empty( $user['subscription_key'] ) ) {
+				update_user_meta( $user_id, 'rcp_subscription_key', $user['subscription_key'] );
 			}
 
 			$member->set_status( $status );
@@ -224,6 +272,8 @@ function rcp_csvui_process_csv() {
 			// Set join date.
 			if ( ! empty( $user['Join Date'] ) ) {
 				$join_date = date( 'Y-m-d H:i:s', strtotime( $user['Join Date'] ) );
+			} elseif ( ! empty( $user['join_date'] ) ) {
+				$join_date = date( 'Y-m-d H:i:s', strtotime( $user['join_date'] ) );
 			} else {
 				$join_date = ''; // Will default to today.
 			}
