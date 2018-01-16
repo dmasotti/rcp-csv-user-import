@@ -22,7 +22,7 @@ jQuery(document).ready(function ($) {
 
 			if ( ! is_free_level ) {
 				// Enable the status select box and hide the "Edit" link.
-				member_status.prop('disabled', false).change();
+				member_status.val('active').prop('disabled', false).change();
 				edit_status.hide();
 			} else {
 				// Set the status to "free", disable editing, and show the "Edit" link.
