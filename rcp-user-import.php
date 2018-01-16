@@ -27,6 +27,45 @@ function rcp_csvui_menu_page() {
 add_action( 'admin_menu', 'rcp_csvui_menu_page', 100 );
 
 /**
+ * Load admin scripts on CSV Import page.
+ *
+ * @param string $hook Current page hook.
+ *
+ * @since 1.1.7
+ * @return void
+ */
+function rcp_csvui_admin_scripts( $hook ) {
+
+	if ( 'restrict_page_rcp-csv-import' != $hook ) {
+		return;
+	}
+
+	if ( ! function_exists( 'rcp_get_subscription_levels' ) ) {
+		return;
+	}
+
+	wp_enqueue_script( 'rcp-csv-user-import', plugin_dir_url( __FILE__ ) . 'assets/js/admin.js', array( 'jquery' ), '1.1.6', true );
+
+	$levels         = rcp_get_subscription_levels();
+	$free_level_ids = array();
+
+	if ( ! empty( $levels ) ) {
+		foreach ( $levels as $level ) {
+			if ( empty( $level->duration ) && empty( $level->price ) ) {
+				$free_level_ids[] = $level->id;
+			}
+		}
+	}
+
+	wp_localize_script( 'rcp-csv-user-import', 'rcp_csvui_vars', array(
+		'free_level_ids'      => $free_level_ids,
+		'confirm_edit_status' => __( 'Members of free subscription levels should be given the status "Free" - not "Active". Changing this may cause certain features like the [is_paid] shortcode to not work as expected.', 'rcp_csvui' )
+	) );
+
+}
+add_action( 'admin_enqueue_scripts', 'rcp_csvui_admin_scripts' );
+
+/**
  * Render the CSV Import page
  *
  * @return void
@@ -72,6 +111,7 @@ function rcp_csvui_purchase_import() {
 							<option value="expired"><?php _e( 'Expired', 'rcp_csvui' ); ?></option>
 							<option value="free"><?php _e( 'Free', 'rcp_csvui' ); ?></option>
 						</select>
+						<a href="#" id="rcp_csvui_edit_status" style="display:none;"><?php _e( 'Edit Status', 'rcp_csvui' ); ?></a>
 						<div class="description"><?php _e( 'Select the subscription status to import users with.', 'rcp_csvui' ); ?></div>
 					</td>
 				</tr>
