@@ -51,7 +51,7 @@ function rcp_csvui_admin_scripts( $hook ) {
 
 	if ( ! empty( $levels ) ) {
 		foreach ( $levels as $level ) {
-			if ( empty( $level->duration ) ) {
+			if ( empty( $level->duration ) && empty( $level->price ) ) {
 				$free_level_ids[] = $level->id;
 			}
 		}
