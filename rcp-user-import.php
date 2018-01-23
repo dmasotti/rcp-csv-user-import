@@ -300,6 +300,11 @@ function rcp_csvui_process_csv() {
 				$member->set_payment_profile_id( $user['payment_profile_id'] );
 			}
 
+			// Merchant subscription ID (i.e. Stripe subscription ID number)
+			if ( ! empty( $user['Subscription ID'] ) ) {
+				$member->set_merchant_subscription_id( sanitize_text_field( $user['Subscription ID'] ) );
+			}
+
 			// Subscription key
 			if ( ! empty( $user['Subscription Key'] ) ) {
 				update_user_meta( $user_id, 'rcp_subscription_key', $user['Subscription Key'] );
