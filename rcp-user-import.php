@@ -122,6 +122,13 @@ function rcp_csvui_purchase_import() {
 						<div class="description"><?php _e( 'Select the expiration date for all users. Leave this blank and the expiration date will be automatically calculated based on the selected subscription.', 'rcp_csvui' ); ?></div>
 					</td>
 				</tr>
+				<tr>
+					<th><?php _e( 'Disable Notification Emails', 'rcp_csv_ui' ); ?></th>
+					<td>
+						<input type="checkbox" name="rcp_member_import_disable_notification_emails" id="rcp_member_import_disable_notification_emails" value="1"/>
+						<div class="description"><?php _e( 'If checked, all member and admin notification emails will be disabled for imported users.', 'rcp_csvui' ); ?></div>
+					</td>
+				</tr>
 
 			</table>
 			<input type="hidden" name="rcp_action" value="process_csv_import"/>
@@ -173,6 +180,15 @@ function rcp_csvui_process_csv() {
 		}
 
 		$status = isset( $_POST['rcp_status'] ) ? sanitize_text_field( $_POST['rcp_status'] ) : 'free';
+
+		// Maybe disable notification emails.
+		if ( ! empty( $_POST['rcp_member_import_disable_notification_emails'] ) ) {
+			remove_action( 'rcp_set_status', 'rcp_email_on_expiration', 11 );
+			remove_action( 'rcp_set_status', 'rcp_email_on_activation', 11 );
+			remove_action( 'rcp_set_status', 'rcp_email_on_free_trial', 11 );
+			remove_action( 'rcp_set_status_free', 'rcp_email_on_free_subscription', 11 );
+			remove_action( 'rcp_set_status', 'rcp_email_on_cancellation', 11 );
+		}
 
 		foreach ( $csv->data as $user ) {
 
