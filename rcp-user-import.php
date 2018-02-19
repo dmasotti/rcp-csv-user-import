@@ -156,6 +156,11 @@ function rcp_csvui_process_csv() {
 			wp_die( __('Please upload a CSV file.', 'rcp_csvui' ), __('Error') );
 		}
 
+		/**
+		 * @var RCP_Levels $rcp_levels_db
+		 */
+		global $rcp_levels_db;
+
 		$csv = new parseCSV();
 
 		$csv->parse( $import_file );
@@ -250,25 +255,6 @@ function rcp_csvui_process_csv() {
 				$user_id = $user_data->ID;
 			}
 
-			$member = new RCP_Member( $user_id );
-
-			update_user_meta( $user_id, 'rcp_subscription_level', $subscription_id );
-
-			// Recurring flag
-			if ( isset( $user['Recurring'] ) ) {
-				$recurring = $user['Recurring'];
-			} elseif ( isset( $user['recurring'] ) ) {
-				$recurring = $user['recurring'];
-			} else {
-				$recurring = null;
-			}
-
-			if ( ! empty( $recurring ) && in_array( $recurring, array( '1', 'yes' ) ) ) {
-				$member->set_recurring( true );
-			} elseif ( in_array( $recurring, array( '0', 'no' ) ) ) {
-				$member->set_recurring( false );
-			}
-
 			/**
 			 * If the expiration date wasn't specified on the import screen,
 			 * check the CSV file. If no expiration in the CSV file, calculate
@@ -279,7 +265,7 @@ function rcp_csvui_process_csv() {
 					$expiration = $user['Expiration'];
 				} elseif ( ! empty( $user['expiration'] ) ) {
 					$expiration = $user['expiration'];
-				}  else {
+				} else {
 					// calculate expiration here
 					$expiration = rcp_calculate_subscription_expiration( $subscription_id );
 				}
@@ -291,30 +277,48 @@ function rcp_csvui_process_csv() {
 				$expiration = date( 'Y-m-d H:i:s', $timestamp );
 			}
 
-			$member->set_expiration_date( $expiration );
-
-			// Payment profile ID
-			if ( ! empty( $user['Payment Profile ID'] ) ) {
-				$member->set_payment_profile_id( $user['Payment Profile ID'] );
-			} elseif ( ! empty( $user['payment_profile_id'] ) ) {
-				$member->set_payment_profile_id( $user['payment_profile_id'] );
-			}
-
-			// Merchant subscription ID (i.e. Stripe subscription ID number)
-			if ( ! empty( $user['Subscription ID'] ) ) {
-				$member->set_merchant_subscription_id( sanitize_text_field( $user['Subscription ID'] ) );
-			}
-
-			// Subscription key
+			/**
+			 * Get subscription key.
+			 */
 			if ( ! empty( $user['Subscription Key'] ) ) {
-				update_user_meta( $user_id, 'rcp_subscription_key', $user['Subscription Key'] );
+				$subscription_key = $user['Subscription Key'];
 			} elseif ( ! empty( $user['subscription_key'] ) ) {
-				update_user_meta( $user_id, 'rcp_subscription_key', $user['subscription_key'] );
+				$subscription_key = $user['subscription_key'];
+			} else {
+				$subscription_key = '';
 			}
 
-			$member->set_status( $status );
+			/**
+			 * Get recurring flag.
+			 */
+			if ( isset( $user['Recurring'] ) ) {
+				$recurring = $user['Recurring'];
+			} elseif ( isset( $user['recurring'] ) ) {
+				$recurring = $user['recurring'];
+			} else {
+				$recurring = null;
+			}
+			// Convert into boolean.
+			if ( ! empty( $recurring ) && in_array( $recurring, array( '1', 'yes' ) ) ) {
+				$recurring = true;
+			} elseif ( in_array( $recurring, array( '0', 'no' ) ) ) {
+				$recurring = false;
+			}
 
-			// Set join date.
+			/**
+			 * Get payment profile ID.
+			 */
+			if ( ! empty( $user['Payment Profile ID'] ) ) {
+				$payment_profile_id = $user['Payment Profile ID'];
+			} elseif ( ! empty( $user['payment_profile_id'] ) ) {
+				$payment_profile_id = $user['payment_profile_id'];
+			} else {
+				$payment_profile_id = '';
+			}
+
+			/**
+			 * Get join date.
+			 */
 			if ( ! empty( $user['Join Date'] ) ) {
 				$join_date = date( 'Y-m-d H:i:s', strtotime( $user['Join Date'] ) );
 			} elseif ( ! empty( $user['join_date'] ) ) {
@@ -322,7 +326,94 @@ function rcp_csvui_process_csv() {
 			} else {
 				$join_date = ''; // Will default to today.
 			}
-			$member->set_joined_date( $join_date );
+
+			$member = new RCP_Member( $user_id );
+
+			if ( function_exists( 'rcp_add_user_to_subscription' ) ) {
+
+				/**
+				 * Use RCP 2.9+ function for adding user to a subscription.
+				 * @see rcp_add_user_to_subscription()
+				 */
+
+				if ( null === $recurring ) {
+					// Get existing value so we don't change it.
+					$recurring = $member->is_recurring();
+				}
+
+				// Set join date now if it's specified. If not, this will be set to today in rcp_add_user_to_subscription().
+				if ( ! empty( $join_date ) ) {
+					$member->set_joined_date( $join_date, $subscription_id );
+				}
+
+				$args = array(
+					'status'             => $status,
+					'subscription_id'    => $subscription_id,
+					'expiration'         => $expiration,
+					'subscription_key'   => $subscription_key,
+					'recurring'          => $recurring,
+					'payment_profile_id' => $payment_profile_id
+				);
+
+				rcp_add_user_to_subscription( $user_id, $args );
+
+			} else {
+
+				/**
+				 * Backwards compatibility if RCP core is not on version 2.9+.
+				 */
+
+				$previous_subscription_level = $member->get_subscription_id();
+
+				// Set subscription level.
+				$member->set_subscription_id( $subscription_id );
+
+				// Set recurring value.
+				if ( true === $recurring ) {
+					$member->set_recurring( true );
+				} elseif ( false === $recurring ) {
+					$member->set_recurring( false );
+				}
+
+				// Set expiration date.
+				$member->set_expiration_date( $expiration );
+
+				// Set payment profile ID
+				if ( ! empty( $payment_profile_id ) ) {
+					$member->set_payment_profile_id( $payment_profile_id );
+				}
+
+				// Set subscription key
+				if ( ! empty( $subscription_key ) ) {
+					$member->set_subscription_key( $subscription_key );
+				}
+
+				$member->set_status( $status );
+
+				// Set join date.
+				$member->set_joined_date( $join_date );
+
+				// Remove the user's old role.
+				$old_role = get_option( 'default_role', 'subscriber' );
+				if ( ! empty( $previous_subscription_level ) ) {
+					$old_level = $rcp_levels_db->get_level( $previous_subscription_level );
+					$old_role  = ! empty( $old_level->role ) ? $old_level->role : $old_role;
+				}
+				$member->remove_role( $old_role );
+
+				// Set the user's new role for this new subscription level.
+				$role = ! empty( $subscription_details->role ) ? $subscription_details->role : get_option( 'default_role', 'subscriber' );
+				$member->add_role( apply_filters( 'rcp_default_user_level', $role, $subscription_details->id ) );
+
+			}
+
+			/**
+			 * Set merchant subscription ID (i.e. Stripe subscription ID number).
+			 * This isn't available in rcp_add_user_to_subscription(), which is why it's down here.
+			 */
+			if ( ! empty( $user['Subscription ID'] ) ) {
+				$member->set_merchant_subscription_id( sanitize_text_field( $user['Subscription ID'] ) );
+			}
 
 			do_action( 'rcp_user_import_user_added', $user_id, $user_data, $subscription_id, $status, $expiration, $user );
 		}
