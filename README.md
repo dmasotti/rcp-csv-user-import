@@ -28,6 +28,32 @@ When importing, every user has their password auto generated, so each user will 
 
 ## Changelog
 
+### 1.1.8
+
+* New: Add user note to imported users saying they were imported from a CSV file.
+* New: Add option to disable email notifications during import process.
+* New: Add support for `Subscription ID` column (`rcp_merchant_subscription_id` meta).
+* Fix: Imported members not given subscription level role.
+
+### 1.1.7
+
+* Tweak: Added backwards compatibility for using old column header format.
+* New: Automatically set status to "Free" when importing members to a free subscription level.
+
+### 1.1.6
+
+* New: Add support for member joined date.
+* Tweak: Improve compatibility with RCP core export file.
+* Fix: Expiration dates with commas not being parsed correctly.
+* Fix: Sanitize expiration date before saving.
+
+### 1.1.5
+
+* Only allow CSV files to be selected during import.
+* Load the DatePicker styles on the import page.
+* Add the $user object to the rcp_user_import_user_added action.
+* Cleaned up and documented the code.
+
 ### 1.1.3
 
 * Fixed an issue with updating existing members

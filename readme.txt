@@ -5,8 +5,8 @@ Author: Pippin Williamson
 Donate link: http://pippinsplugins.com/support-the-site
 Tags: Restrict Content Pro, premium content, memberships, subscriptions, csv, user import, csv to users, Pippin Williamson, Pippin's Plugins
 Requires at least 3.3
-Tested up to 4.9.1
-Stable tag: 1.1.7
+Tested up to 4.9.4
+Stable tag: 1.1.8
 
 A plugin for importing a CSV of user accounts into Restrict Content Pro.
 
@@ -31,6 +31,12 @@ See the [CSV User Import documentation](http://docs.restrictcontentpro.com/artic
 1. CSV user import page.
 
 == Changelog ==
+= 1.1.8 =
+* New: Add user note to imported users saying they were imported from a CSV file.
+* New: Add option to disable email notifications during import process.
+* New: Add support for `Subscription ID` column (`rcp_merchant_subscription_id` meta).
+* Fix: Imported members not given subscription level role.
+
 = 1.1.7 =
 * Tweak: Added backwards compatibility for using old column header format.
 * New: Automatically set status to "Free" when importing members to a free subscription level.
