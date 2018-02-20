@@ -10,11 +10,11 @@ Once activated, this plugin will provide a new menu item under the Restrict menu
 
 In order to import correctly, you must preformat your CSV to match the requirements of the plugin. You CSV should have the following columns:
 
-**user_email, first_name, last_name, user_login**
+**User Email, First Name, Last Name, User Login**
 
 A sample CSV is included in the plugin's folder that you can use for reference.
 
-The user's email address is the only column that requires a value. If user_login is left blank, the user's email address will be used for their login name.
+The user's email address is the only column that requires a value. If `User Login` is left blank, the user's email address will be used for their login name.
 
 When importing, every user has their password auto generated, so each user will need to go through the recover a lost password process.
 
