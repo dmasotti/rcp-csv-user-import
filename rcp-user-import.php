@@ -431,7 +431,7 @@ function rcp_csvui_process_csv() {
 				$member->set_merchant_subscription_id( sanitize_text_field( $user['Subscription ID'] ) );
 			}
 
-			update_user_meta( $user_id, 'rcp_signup_method', apply_filters( 'rcp_csv_user_import_signup_method', 'imported' ) );
+			update_user_meta( $user_id, 'rcp_signup_method', 'imported' );
 
 			$member->add_note( __( 'Imported from CSV file.', 'rcp_csvui' ) );
 
