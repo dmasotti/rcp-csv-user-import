@@ -126,7 +126,14 @@ function rcp_csvui_purchase_import() {
 					<th><?php _e( 'Disable Notification Emails', 'rcp_csv_ui' ); ?></th>
 					<td>
 						<input type="checkbox" name="rcp_member_import_disable_notification_emails" id="rcp_member_import_disable_notification_emails" value="1"/>
-						<div class="description"><?php _e( 'If checked, all member and admin notification emails will be disabled for imported users.', 'rcp_csvui' ); ?></div>
+						<span class="description"><?php _e( 'If checked, all member and admin notification emails will be disabled for imported users.', 'rcp_csvui' ); ?></span>
+					</td>
+				</tr>
+				<tr>
+					<th><?php _e( 'Send Password Reset Emails', 'rcp_csv_ui' ); ?></th>
+					<td>
+						<input type="checkbox" name="rcp_member_import_send_password_reset_emails" id="rcp_member_import_send_password_reset_emails" value="1"/>
+						<span class="description"><?php _e( 'If checked, new accounts will be sent a password reset email. Existing accounts will not receive one.', 'rcp_csvui' ); ?></span>
 					</td>
 				</tr>
 
@@ -266,6 +273,10 @@ function rcp_csvui_process_csv() {
 				);
 
 				$user_id = wp_insert_user( $user_data );
+
+				if ( ! empty( $_POST['rcp_member_import_send_password_reset_emails'] ) ) {
+					wp_new_user_notification( $user_id, null, 'user' );
+				}
 
 			} else {
 				$user_id = $user_data->ID;
