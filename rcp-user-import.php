@@ -159,25 +159,22 @@ function rcp_csvui_process_csv() {
 			return;
 		}
 
-		if ( ! class_exists( 'parseCSV' ) ) {
-
-			require_once dirname( __FILE__ ) . '/parsecsv.lib.php';
-		}
-
 		$import_file = ! empty( $_FILES['rcp_csvui_file'] ) ? $_FILES['rcp_csvui_file']['tmp_name'] : false;
 
 		if ( ! $import_file ) {
 			wp_die( __('Please upload a CSV file.', 'rcp_csvui' ), __('Error') );
 		}
 
+		$csv = array_map( 'str_getcsv', file( $import_file ) );
+		array_walk( $csv, function( &$a ) use ( $csv ) {
+			$a = array_combine( $csv[0], $a );
+		});
+		array_shift( $csv );
+
 		/**
 		 * @var RCP_Levels $rcp_levels_db
 		 */
 		global $rcp_levels_db;
-
-		$csv = new parseCSV();
-
-		$csv->parse( $import_file );
 
 		$subscription_id = isset( $_POST['rcp_level'] ) ? absint( $_POST['rcp_level'] ) : false;
 
@@ -202,7 +199,7 @@ function rcp_csvui_process_csv() {
 			remove_action( 'rcp_set_status', 'rcp_email_on_cancellation', 11 );
 		}
 
-		foreach ( $csv->data as $user ) {
+		foreach ( $csv as $row_number => $user ) {
 
 			$expiration = ! empty( $_POST['rcp_expiration'] ) ? sanitize_text_field( $_POST['rcp_expiration'] ) : false;
 			$email      = ! empty( $user['User Email'] ) ? $user['User Email'] : $user['user_email'];
@@ -261,6 +258,16 @@ function rcp_csvui_process_csv() {
 					$last_name = $user['last_name'];
 				} else {
 					$last_name = '';
+				}
+
+				// Email address and user login are required for new accounts.
+				if ( empty( $email ) || empty( $user_login) ) {
+					if ( function_exists( 'rcp_log' ) ) {
+						// We add +1 to the row number for clarity to the end user, who may not realize they start from 0 rather than 1.
+						rcp_log( sprintf( 'CSV Import: skipping row #%d - missing email address and/or user login.', ( $row_number + 1 ) ) );
+					}
+
+					continue;
 				}
 
 				$user_data  = array(
