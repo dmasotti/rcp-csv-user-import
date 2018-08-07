@@ -126,7 +126,7 @@ function rcp_csvui_purchase_import() {
 					<th><?php _e( 'Disable Notification Emails', 'rcp_csv_ui' ); ?></th>
 					<td>
 						<input type="checkbox" name="rcp_member_import_disable_notification_emails" id="rcp_member_import_disable_notification_emails" value="1"/>
-						<span class="description"><?php _e( 'If checked, all member and admin notification emails will be disabled for imported users.', 'rcp_csvui' ); ?></span>
+						<span class="description"><?php _e( 'Check on to disable member and admin notification emails during the import process.', 'rcp_csvui' ); ?></span>
 					</td>
 				</tr>
 				<tr>
