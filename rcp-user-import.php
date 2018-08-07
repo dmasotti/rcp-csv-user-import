@@ -363,6 +363,13 @@ function rcp_csvui_process_csv() {
 
 			$member = new RCP_Member( $user_id );
 
+			/**
+			 * Flag as new membership to trigger activation email.
+			 */
+			if ( $subscription_id != $member->get_subscription_id() ) {
+				update_user_meta( $member->ID, '_rcp_new_subscription', '1' );
+			}
+
 			if ( function_exists( 'rcp_add_user_to_subscription' ) ) {
 
 				/**
