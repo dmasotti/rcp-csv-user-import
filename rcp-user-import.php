@@ -308,7 +308,7 @@ function rcp_csvui_process_csv() {
 			// Make sure a supplied date is formatted correctly.
 			if ( 'none' != strtolower( $expiration ) ) {
 				$timestamp  = is_int( $expiration ) ? $expiration : strtotime( str_replace( ',', '', $expiration ), current_time( 'timestamp' ) );
-				$expiration = date( 'Y-m-d H:i:s', $timestamp );
+				$expiration = date( 'Y-m-d 23:59:59', $timestamp );
 			}
 
 			/**
