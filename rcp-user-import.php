@@ -272,10 +272,10 @@ function rcp_csvui_process_csv() {
 				}
 
 				$user_data  = array(
-					'user_login' => $user_login,
-					'user_email' => $email,
-					'first_name' => $first_name,
-					'last_name'  => $last_name,
+					'user_login' => sanitize_text_field( $user_login ),
+					'user_email' => sanitize_text_field( $email ),
+					'first_name' => sanitize_text_field( $first_name ),
+					'last_name'  => sanitize_text_field( $last_name ),
 					'user_pass'  => $password,
 					'role'       => ! empty( $subscription_details->role ) ? $subscription_details->role : 'subscriber'
 				);
@@ -301,14 +301,14 @@ function rcp_csvui_process_csv() {
 				}
 
 				if ( ! empty( $first_name ) ) {
-					$data_to_update['first_name'] = $first_name;
+					$data_to_update['first_name'] = sanitize_text_field( $first_name );
 				}
 
 				if ( ! empty( $last_name ) ) {
-					$data_to_update['last_name'] = $last_name;
+					$data_to_update['last_name'] = sanitize_text_field( $last_name );
 				}
 
-				if ( ! empty( $data_to_update ) ) {
+				if ( ! empty( $data_to_update ) && ! empty( $user_id ) ) {
 					$data_to_update['ID'] = $user_id;
 
 					wp_update_user( $data_to_update );
