@@ -496,7 +496,7 @@ function rcp_csvui_process_csv() {
 						'subscription_key'        => $subscription_key,
 						'auto_renew'              => $recurring,
 						'gateway_customer_id'     => $payment_profile_id,
-						'gateway_subscription_id' => sanitize_text_field( $user['Subscription ID'] ),
+						'gateway_subscription_id' => ! empty( $user['Subscription ID'] ) ? sanitize_text_field( $user['Subscription ID'] ) : '',
 						'signup_method'           => 'imported',
 						'created_date'            => $join_date
 					) );
