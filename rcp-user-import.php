@@ -222,14 +222,40 @@ function rcp_csvui_process_csv() {
 
 			}
 
+			// Password
+			if ( ! empty( $user['User Password'] ) ) {
+				$password = $user['User Password'];
+			} elseif ( ! empty( $user['user_password'] ) ) {
+				$password = $user['user_password'];
+			} else {
+				$password = '';
+			}
+
+			// First name
+			if ( ! empty( $user['First Name'] ) ) {
+				$first_name = $user['First Name'];
+			} elseif ( ! empty( $user['first_name'] ) ) {
+				$first_name = $user['first_name'];
+			} else {
+				$first_name = '';
+			}
+
+			// Last name
+			if ( ! empty( $user['Last Name'] ) ) {
+				$last_name = $user['Last Name'];
+			} elseif ( ! empty( $user['last_name'] ) ) {
+				$last_name = $user['last_name'];
+			} else {
+				$last_name = '';
+			}
+
 			if ( ! $user_data ) {
 
-				// Password
-				if ( ! empty( $user['User Password'] ) ) {
-					$password = $user['User Password'];
-				} elseif ( ! empty( $user['user_password'] ) ) {
-					$password = $user['user_password'];
-				} else {
+				/**
+				 * Create a new account.
+				 */
+
+				if ( empty( $password ) ) {
 					$password = wp_generate_password();
 				}
 
@@ -242,26 +268,8 @@ function rcp_csvui_process_csv() {
 					$user_login = $email;
 				}
 
-				// First name
-				if ( ! empty( $user['First Name'] ) ) {
-					$first_name = $user['First Name'];
-				} elseif ( ! empty( $user['first_name'] ) ) {
-					$first_name = $user['first_name'];
-				} else {
-					$first_name = '';
-				}
-
-				// Last name
-				if ( ! empty( $user['Last Name'] ) ) {
-					$last_name = $user['Last Name'];
-				} elseif ( ! empty( $user['last_name'] ) ) {
-					$last_name = $user['last_name'];
-				} else {
-					$last_name = '';
-				}
-
 				// Email address and user login are required for new accounts.
-				if ( empty( $email ) || empty( $user_login) ) {
+				if ( empty( $email ) || empty( $user_login ) ) {
 					if ( function_exists( 'rcp_log' ) ) {
 						// We add +1 to the row number for clarity to the end user, who may not realize they start from 0 rather than 1.
 						rcp_log( sprintf( 'CSV Import: skipping row #%d - missing email address and/or user login.', ( $row_number + 1 ) ) );
@@ -271,10 +279,10 @@ function rcp_csvui_process_csv() {
 				}
 
 				$user_data  = array(
-					'user_login' => $user_login,
-					'user_email' => $email,
-					'first_name' => $first_name,
-					'last_name'  => $last_name,
+					'user_login' => sanitize_text_field( $user_login ),
+					'user_email' => sanitize_text_field( $email ),
+					'first_name' => sanitize_text_field( $first_name ),
+					'last_name'  => sanitize_text_field( $last_name ),
 					'user_pass'  => $password,
 					'role'       => ! empty( $subscription_details->role ) ? $subscription_details->role : 'subscriber'
 				);
@@ -286,7 +294,33 @@ function rcp_csvui_process_csv() {
 				}
 
 			} else {
+
+				/**
+				 * Update an existing account with new information.
+				 */
+
 				$user_id = $user_data->ID;
+
+				$data_to_update = array();
+
+				if ( ! empty( $password ) ) {
+					$data_to_update['user_pass'] = $password;
+				}
+
+				if ( ! empty( $first_name ) ) {
+					$data_to_update['first_name'] = sanitize_text_field( $first_name );
+				}
+
+				if ( ! empty( $last_name ) ) {
+					$data_to_update['last_name'] = sanitize_text_field( $last_name );
+				}
+
+				if ( ! empty( $data_to_update ) && ! empty( $user_id ) ) {
+					$data_to_update['ID'] = $user_id;
+
+					wp_update_user( $data_to_update );
+				}
+
 			}
 
 			/**
