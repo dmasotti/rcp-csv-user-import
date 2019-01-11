@@ -488,6 +488,8 @@ function rcp_csvui_process_csv() {
 						$customer->disable_memberships();
 					}
 
+					$membership_level = rcp_get_subscription_details( $subscription_id );
+
 					// Add new membership.
 					$membership_id = $customer->add_membership( array(
 						'status'                  => $status,
@@ -498,7 +500,9 @@ function rcp_csvui_process_csv() {
 						'gateway_customer_id'     => $payment_profile_id,
 						'gateway_subscription_id' => ! empty( $user['Subscription ID'] ) ? sanitize_text_field( $user['Subscription ID'] ) : '',
 						'signup_method'           => 'imported',
-						'created_date'            => $join_date
+						'created_date'            => $join_date,
+						'initial_amount'          => $membership_level->price + $membership_level->fee,
+						'recurring_amount'        => $membership_level->price
 					) );
 
 					if ( ! empty( $membership_id ) ) {
