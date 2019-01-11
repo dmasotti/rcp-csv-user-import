@@ -455,9 +455,9 @@ function rcp_csvui_process_csv() {
 					 * Update existing membership.
 					 */
 					$membership_update_args = array(
-						'status'     => $status,
-						'expiration' => $expiration,
-						'auto_renew' => $recurring,
+						'status'          => $status,
+						'expiration_date' => $expiration,
+						'auto_renew'      => $recurring,
 					);
 
 					if ( ! empty( $join_date ) ) {
@@ -492,7 +492,7 @@ function rcp_csvui_process_csv() {
 					$membership_id = $customer->add_membership( array(
 						'status'                  => $status,
 						'object_id'               => $subscription_id,
-						'expiration'              => $expiration,
+						'expiration_date'         => $expiration,
 						'subscription_key'        => $subscription_key,
 						'auto_renew'              => $recurring,
 						'gateway_customer_id'     => $payment_profile_id,
