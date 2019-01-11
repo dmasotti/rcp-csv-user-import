@@ -435,29 +435,76 @@ function rcp_csvui_process_csv() {
 					$customer = rcp_get_customer( $customer_id );
 				}
 
-				// Disable all other memberships.
-				if ( ! rcp_multiple_memberships_enabled() ) {
-					$customer->disable_memberships();
+				$membership_to_update = false;
+
+				if ( ! rcp_multiple_memberships_enabled() && $customer->has_active_membership() ) {
+					$membership = rcp_get_customer_single_membership( $customer->get_id() );
+
+					/*
+					 * If this customer already has a membership with the same membership level ID, we'll update it
+					 * instead of creating a whole new one.
+					 */
+					if ( ! empty( $membership ) && $subscription_id == $membership->get_object_id() ) {
+						$membership_to_update = $membership;
+					}
 				}
 
-				// Add new membership.
-				$membership_id = $customer->add_membership( array(
-					'status'                  => $status,
-					'object_id'               => $subscription_id,
-					'expiration'              => $expiration,
-					'subscription_key'        => $subscription_key,
-					'auto_renew'              => $recurring,
-					'gateway_customer_id'     => $payment_profile_id,
-					'gateway_subscription_id' => sanitize_text_field( $user['Subscription ID'] ),
-					'signup_method'           => 'imported'
-				) );
+				if ( ! empty( $membership_to_update ) ) {
 
-				if ( ! empty( $membership_id ) ) {
-					$membership = rcp_get_membership( $membership_id );
+					/**
+					 * Update existing membership.
+					 */
+					$membership_update_args = array(
+						'status'     => $status,
+						'expiration' => $expiration,
+						'auto_renew' => $recurring,
+					);
 
-					if ( ! empty( $membership ) ) {
-						$membership->add_note( __( 'Imported from CSV file.', 'rcp_csvui' ) );
+					if ( ! empty( $subscription_key ) ) {
+						$membership_update_args['subscription_key'] = $subscription_key;
 					}
+					if ( ! empty( $payment_profile_id ) ) {
+						$membership_update_args['gateway_customer_id'] = $payment_profile_id;
+					}
+					if ( ! empty( $user['Subscription ID'] ) ) {
+						$membership_update_args['gateway_subscription_id'] = sanitize_text_field( $user['Subscription ID'] );
+					}
+
+					$membership_to_update->update( $membership_update_args );
+
+					$membership_to_update->add_note( __( 'Updated from CSV file.', 'rcp_csvui' ) );
+
+				} else {
+
+					/**
+					 * Disable all other memberships and add a new one.
+					 */
+
+					// Disable all other memberships.
+					if ( ! rcp_multiple_memberships_enabled() ) {
+						$customer->disable_memberships();
+					}
+
+					// Add new membership.
+					$membership_id = $customer->add_membership( array(
+						'status'                  => $status,
+						'object_id'               => $subscription_id,
+						'expiration'              => $expiration,
+						'subscription_key'        => $subscription_key,
+						'auto_renew'              => $recurring,
+						'gateway_customer_id'     => $payment_profile_id,
+						'gateway_subscription_id' => sanitize_text_field( $user['Subscription ID'] ),
+						'signup_method'           => 'imported'
+					) );
+
+					if ( ! empty( $membership_id ) ) {
+						$membership = rcp_get_membership( $membership_id );
+
+						if ( ! empty( $membership ) ) {
+							$membership->add_note( __( 'Imported from CSV file.', 'rcp_csvui' ) );
+						}
+					}
+
 				}
 
 			} elseif ( function_exists( 'rcp_add_user_to_subscription' ) ) {
