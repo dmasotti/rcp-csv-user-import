@@ -460,6 +460,9 @@ function rcp_csvui_process_csv() {
 						'auto_renew' => $recurring,
 					);
 
+					if ( ! empty( $join_date ) ) {
+						$membership_update_args['created_date'] = $join_date;
+					}
 					if ( ! empty( $subscription_key ) ) {
 						$membership_update_args['subscription_key'] = $subscription_key;
 					}
@@ -494,7 +497,8 @@ function rcp_csvui_process_csv() {
 						'auto_renew'              => $recurring,
 						'gateway_customer_id'     => $payment_profile_id,
 						'gateway_subscription_id' => sanitize_text_field( $user['Subscription ID'] ),
-						'signup_method'           => 'imported'
+						'signup_method'           => 'imported',
+						'created_date'            => $join_date
 					) );
 
 					if ( ! empty( $membership_id ) ) {
