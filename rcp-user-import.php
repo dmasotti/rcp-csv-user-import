@@ -126,7 +126,7 @@ function rcp_csvui_purchase_import() {
 					<th><?php _e( 'Disable Notification Emails', 'rcp_csv_ui' ); ?></th>
 					<td>
 						<input type="checkbox" name="rcp_member_import_disable_notification_emails" id="rcp_member_import_disable_notification_emails" value="1"/>
-						<span class="description"><?php _e( 'If checked, all member and admin notification emails will be disabled for imported users.', 'rcp_csvui' ); ?></span>
+						<span class="description"><?php _e( 'Check on to disable member and admin notification emails during the import process.', 'rcp_csvui' ); ?></span>
 					</td>
 				</tr>
 				<tr>
@@ -159,25 +159,22 @@ function rcp_csvui_process_csv() {
 			return;
 		}
 
-		if ( ! class_exists( 'parseCSV' ) ) {
-
-			require_once dirname( __FILE__ ) . '/parsecsv.lib.php';
-		}
-
 		$import_file = ! empty( $_FILES['rcp_csvui_file'] ) ? $_FILES['rcp_csvui_file']['tmp_name'] : false;
 
 		if ( ! $import_file ) {
 			wp_die( __('Please upload a CSV file.', 'rcp_csvui' ), __('Error') );
 		}
 
+		$csv = array_map( 'str_getcsv', file( $import_file ) );
+		array_walk( $csv, function( &$a ) use ( $csv ) {
+			$a = array_combine( $csv[0], $a );
+		});
+		array_shift( $csv );
+
 		/**
 		 * @var RCP_Levels $rcp_levels_db
 		 */
 		global $rcp_levels_db;
-
-		$csv = new parseCSV();
-
-		$csv->parse( $import_file );
 
 		$subscription_id = isset( $_POST['rcp_level'] ) ? absint( $_POST['rcp_level'] ) : false;
 
@@ -202,7 +199,7 @@ function rcp_csvui_process_csv() {
 			remove_action( 'rcp_set_status', 'rcp_email_on_cancellation', 11 );
 		}
 
-		foreach ( $csv->data as $user ) {
+		foreach ( $csv as $row_number => $user ) {
 
 			$expiration = ! empty( $_POST['rcp_expiration'] ) ? sanitize_text_field( $_POST['rcp_expiration'] ) : false;
 			$email      = ! empty( $user['User Email'] ) ? $user['User Email'] : $user['user_email'];
@@ -271,6 +268,16 @@ function rcp_csvui_process_csv() {
 					$user_login = $email;
 				}
 
+				// Email address and user login are required for new accounts.
+				if ( empty( $email ) || empty( $user_login ) ) {
+					if ( function_exists( 'rcp_log' ) ) {
+						// We add +1 to the row number for clarity to the end user, who may not realize they start from 0 rather than 1.
+						rcp_log( sprintf( 'CSV Import: skipping row #%d - missing email address and/or user login.', ( $row_number + 1 ) ) );
+					}
+
+					continue;
+				}
+
 				$user_data  = array(
 					'user_login' => sanitize_text_field( $user_login ),
 					'user_email' => sanitize_text_field( $email ),
@@ -335,7 +342,7 @@ function rcp_csvui_process_csv() {
 			// Make sure a supplied date is formatted correctly.
 			if ( 'none' != strtolower( $expiration ) ) {
 				$timestamp  = is_int( $expiration ) ? $expiration : strtotime( str_replace( ',', '', $expiration ), current_time( 'timestamp' ) );
-				$expiration = date( 'Y-m-d H:i:s', $timestamp );
+				$expiration = date( 'Y-m-d 23:59:59', $timestamp );
 			}
 
 			/**
@@ -389,6 +396,13 @@ function rcp_csvui_process_csv() {
 			}
 
 			$member = new RCP_Member( $user_id );
+
+			/**
+			 * Flag as new membership to trigger activation email.
+			 */
+			if ( $subscription_id != $member->get_subscription_id() ) {
+				update_user_meta( $member->ID, '_rcp_new_subscription', '1' );
+			}
 
 			if ( function_exists( 'rcp_add_user_to_subscription' ) ) {
 
@@ -476,7 +490,9 @@ function rcp_csvui_process_csv() {
 				$member->set_merchant_subscription_id( sanitize_text_field( $user['Subscription ID'] ) );
 			}
 
-			update_user_meta( $user_id, 'rcp_signup_method', 'imported' );
+			if( version_compare( RCP_PLUGIN_VERSION, '2.9.11', '>=' ) ) {
+				update_user_meta( $user_id, 'rcp_signup_method', 'imported' );
+			}
 
 			$member->add_note( __( 'Imported from CSV file.', 'rcp_csvui' ) );
 
