@@ -109,7 +109,9 @@ function rcp_csvui_purchase_import() {
 							<option value="pending"><?php _e( 'Pending', 'rcp_csvui' ); ?></option>
 							<option value="cancelled"><?php _e( 'Cancelled', 'rcp_csvui' ); ?></option>
 							<option value="expired"><?php _e( 'Expired', 'rcp_csvui' ); ?></option>
-							<option value="free"><?php _e( 'Free', 'rcp_csvui' ); ?></option>
+							<?php if ( version_compare( RCP_PLUGIN_VERSION, '3.0', '<' ) ) : ?>
+								<option value="free"><?php _e( 'Free', 'rcp_csvui' ); ?></option>
+							<?php endif; ?>
 						</select>
 						<a href="#" id="rcp_csvui_edit_status" style="display:none;"><?php _e( 'Edit Status', 'rcp_csvui' ); ?></a>
 						<div class="description"><?php _e( 'Select the subscription status to import users with.', 'rcp_csvui' ); ?></div>
@@ -197,6 +199,12 @@ function rcp_csvui_process_csv() {
 			remove_action( 'rcp_set_status', 'rcp_email_on_free_trial', 11 );
 			remove_action( 'rcp_set_status_free', 'rcp_email_on_free_subscription', 11 );
 			remove_action( 'rcp_set_status', 'rcp_email_on_cancellation', 11 );
+
+			if ( version_compare( RCP_PLUGIN_VERSION, '3.0', '>=' ) ) {
+				remove_action( 'rcp_membership_post_activate', 'rcp_email_on_membership_activation', 10 );
+				remove_action( 'rcp_membership_post_cancel', 'rcp_email_on_membership_cancellation', 10 );
+				remove_action( 'rcp_transition_membership_status_expired', 'rcp_email_on_membership_expiration', 10 );
+			}
 		}
 
 		foreach ( $csv as $row_number => $user ) {
@@ -404,7 +412,110 @@ function rcp_csvui_process_csv() {
 				update_user_meta( $member->ID, '_rcp_new_subscription', '1' );
 			}
 
-			if ( function_exists( 'rcp_add_user_to_subscription' ) ) {
+			if ( version_compare( RCP_PLUGIN_VERSION, '3.0', '>=' ) ) {
+
+				/**
+				 * RCP version 3.0+
+				 */
+
+				$customer = rcp_get_customer_by_user_id( $user_id );
+
+				if ( empty( $customer ) ) {
+					// Create customer.
+					$customer_id = rcp_add_customer( array(
+						'user_id' => $user_id
+					) );
+
+					if ( empty( $customer_id ) ) {
+						rcp_log( sprintf( 'CSV Import: skipping row #%d - failed to create customer record.', ( $row_number + 1 ) ) );
+
+						continue;
+					}
+
+					$customer = rcp_get_customer( $customer_id );
+				}
+
+				$membership_to_update = false;
+
+				if ( ! rcp_multiple_memberships_enabled() && $customer->has_active_membership() ) {
+					$membership = rcp_get_customer_single_membership( $customer->get_id() );
+
+					/*
+					 * If this customer already has a membership with the same membership level ID, we'll update it
+					 * instead of creating a whole new one.
+					 */
+					if ( ! empty( $membership ) && $subscription_id == $membership->get_object_id() ) {
+						$membership_to_update = $membership;
+					}
+				}
+
+				if ( ! empty( $membership_to_update ) ) {
+
+					/**
+					 * Update existing membership.
+					 */
+					$membership_update_args = array(
+						'status'          => $status,
+						'expiration_date' => $expiration,
+						'auto_renew'      => $recurring,
+					);
+
+					if ( ! empty( $join_date ) ) {
+						$membership_update_args['created_date'] = $join_date;
+					}
+					if ( ! empty( $subscription_key ) ) {
+						$membership_update_args['subscription_key'] = $subscription_key;
+					}
+					if ( ! empty( $payment_profile_id ) ) {
+						$membership_update_args['gateway_customer_id'] = $payment_profile_id;
+					}
+					if ( ! empty( $user['Subscription ID'] ) ) {
+						$membership_update_args['gateway_subscription_id'] = sanitize_text_field( $user['Subscription ID'] );
+					}
+
+					$membership_to_update->update( $membership_update_args );
+
+					$membership_to_update->add_note( __( 'Updated from CSV file.', 'rcp_csvui' ) );
+
+				} else {
+
+					/**
+					 * Disable all other memberships and add a new one.
+					 */
+
+					// Disable all other memberships.
+					if ( ! rcp_multiple_memberships_enabled() ) {
+						$customer->disable_memberships();
+					}
+
+					$membership_level = rcp_get_subscription_details( $subscription_id );
+
+					// Add new membership.
+					$membership_id = $customer->add_membership( array(
+						'status'                  => $status,
+						'object_id'               => $subscription_id,
+						'expiration_date'         => $expiration,
+						'subscription_key'        => $subscription_key,
+						'auto_renew'              => $recurring,
+						'gateway_customer_id'     => $payment_profile_id,
+						'gateway_subscription_id' => ! empty( $user['Subscription ID'] ) ? sanitize_text_field( $user['Subscription ID'] ) : '',
+						'signup_method'           => 'imported',
+						'created_date'            => $join_date,
+						'initial_amount'          => $membership_level->price + $membership_level->fee,
+						'recurring_amount'        => $membership_level->price
+					) );
+
+					if ( ! empty( $membership_id ) ) {
+						$membership = rcp_get_membership( $membership_id );
+
+						if ( ! empty( $membership ) ) {
+							$membership->add_note( __( 'Imported from CSV file.', 'rcp_csvui' ) );
+						}
+					}
+
+				}
+
+			} elseif ( function_exists( 'rcp_add_user_to_subscription' ) ) {
 
 				/**
 				 * Use RCP 2.9+ function for adding user to a subscription.
@@ -482,19 +593,22 @@ function rcp_csvui_process_csv() {
 
 			}
 
-			/**
-			 * Set merchant subscription ID (i.e. Stripe subscription ID number).
-			 * This isn't available in rcp_add_user_to_subscription(), which is why it's down here.
-			 */
-			if ( ! empty( $user['Subscription ID'] ) ) {
-				$member->set_merchant_subscription_id( sanitize_text_field( $user['Subscription ID'] ) );
-			}
+			// These are only needed below RCP 3.0.
+			if ( version_compare( RCP_PLUGIN_VERSION, '3.0', '<' ) ) {
+				/**
+				 * Set merchant subscription ID (i.e. Stripe subscription ID number).
+				 * This isn't available in rcp_add_user_to_subscription(), which is why it's down here.
+				 */
+				if ( ! empty( $user['Subscription ID'] ) ) {
+					$member->set_merchant_subscription_id( sanitize_text_field( $user['Subscription ID'] ) );
+				}
 
-			if( version_compare( RCP_PLUGIN_VERSION, '2.9.11', '>=' ) ) {
-				update_user_meta( $user_id, 'rcp_signup_method', 'imported' );
-			}
+				if ( version_compare( RCP_PLUGIN_VERSION, '2.9.11', '>=' ) ) {
+					update_user_meta( $user_id, 'rcp_signup_method', 'imported' );
+				}
 
-			$member->add_note( __( 'Imported from CSV file.', 'rcp_csvui' ) );
+				$member->add_note( __( 'Imported from CSV file.', 'rcp_csvui' ) );
+			}
 
 			do_action( 'rcp_user_import_user_added', $user_id, $user_data, $subscription_id, $status, $expiration, $user );
 		}
