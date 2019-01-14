@@ -5,8 +5,8 @@ Author: Pippin Williamson
 Donate link: http://pippinsplugins.com/support-the-site
 Tags: Restrict Content Pro, premium content, memberships, subscriptions, csv, user import, csv to users, Pippin Williamson, Pippin's Plugins
 Requires at least 3.3
-Tested up to 4.9.4
-Stable tag: 1.1.8
+Tested up to 5.0.3
+Stable tag: 1.1.9
 
 A plugin for importing a CSV of user accounts into Restrict Content Pro.
 
@@ -31,6 +31,16 @@ See the [CSV User Import documentation](http://docs.restrictcontentpro.com/artic
 1. CSV user import page.
 
 == Changelog ==
+= 1.1.9 =
+* New: Added support for the upcoming RCP 3.0 update.
+* New: Added option to send password reset email during import.
+* New: Set signup method for imported users to "Imported".
+* Tweak: Update user account data (first/last name and password) when importing existing accounts.
+* Tweak: Adjust "Disable Notification Emails" description.
+* Fix: Expiration date times are now forced to be 23:59:59 to be consistent with RCP core.
+* Fix: `_rcp_new_subscription` meta flag is now set on import.
+* Fix: Verify that required user fields are set in the CSV before creating the user account.
+
 = 1.1.8 =
 * New: Add user note to imported users saying they were imported from a CSV file.
 * New: Add option to disable email notifications during import process.
