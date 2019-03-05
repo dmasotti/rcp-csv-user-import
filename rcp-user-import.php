@@ -44,6 +44,11 @@ function rcp_csvui_admin_scripts( $hook ) {
 		return;
 	}
 
+	// We don't need this JS on RCP 3.0+.
+	if ( version_compare( RCP_PLUGIN_VERSION, '3.0', '>=' ) ) {
+		return;
+	}
+
 	wp_enqueue_script( 'rcp-csv-user-import', plugin_dir_url( __FILE__ ) . 'assets/js/admin.js', array( 'jquery' ), '1.1.7', true );
 
 	$levels         = rcp_get_subscription_levels();
