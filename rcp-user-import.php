@@ -38,6 +38,10 @@ function rcp_csvui_maybe_redirect_to_new_importer( $current_screen ) {
 
 	global $rcp_csvui_import_page;
 
+	if ( empty( $rcp_csvui_import_page ) ) {
+		return;
+	}
+
 	if ( $current_screen->id != $rcp_csvui_import_page ) {
 		return;
 	}
