@@ -27,6 +27,36 @@ function rcp_csvui_menu_page() {
 add_action( 'admin_menu', 'rcp_csvui_menu_page', 100 );
 
 /**
+ * If on RCP 3.1+, redirect the "CSV Import" submenu to the RCP core "Import" page.
+ *
+ * @param WP_Screen $current_screen
+ *
+ * @since 1.1.11
+ * @return void
+ */
+function rcp_csvui_maybe_redirect_to_new_importer( $current_screen ) {
+
+	global $rcp_csvui_import_page;
+
+	if ( $current_screen->id != $rcp_csvui_import_page ) {
+		return;
+	}
+
+	if ( ! defined( 'RCP_PLUGIN_VERSION' ) ) {
+		return;
+	}
+
+	if ( version_compare( RCP_PLUGIN_VERSION, '3.1', '<' ) ) {
+		return;
+	}
+
+	wp_safe_redirect( admin_url( 'admin.php?page=rcp-tools&tab=import' ) );
+	exit;
+
+}
+add_action( 'current_screen', 'rcp_csvui_maybe_redirect_to_new_importer' );
+
+/**
  * Load admin scripts on CSV Import page.
  *
  * @param string $hook Current page hook.
