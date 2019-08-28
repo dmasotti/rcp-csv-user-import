@@ -1,7 +1,7 @@
 === Restrict Content Pro - CSV User Import ===
-Author URI: http://pippinsplugins.com
+Author URI: https://sandhillsdev.com
 Contributors: mordauk, chriscoyier, nosegraze, mindctrl
-Author: Pippin Williamson
+Author: Sandhills Development, LLC
 Donate link: http://pippinsplugins.com/support-the-site
 Tags: Restrict Content Pro, premium content, memberships, subscriptions, csv, user import, csv to users, Pippin Williamson, Pippin's Plugins
 Requires at least 3.3
